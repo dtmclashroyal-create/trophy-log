@@ -1,9 +1,11 @@
 name: 배틀 기록 동기화
 
 on:
+  # 10분마다 cron-job.org가 workflow_dispatch로 실행해요 (GitHub 자체 예약은 자주 늦어서).
+  # 아래 schedule은 cron-job.org가 멈췄을 때를 위한 예비용이에요.
   schedule:
-    - cron: "*/10 * * * *"   # 10분마다 (GitHub 사정으로 몇 분 늦을 수 있어요)
-  workflow_dispatch: {}       # Actions 탭에서 수동 실행
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}       # cron-job.org, 또는 Actions 탭에서 수동 실행
 
 permissions:
   contents: write
@@ -33,4 +35,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/battles.json
           git commit -m "기록 동기화"
+          git pull --rebase origin main   # 그 사이 다른 커밋이 올라왔어도 밀리지 않게
           git push

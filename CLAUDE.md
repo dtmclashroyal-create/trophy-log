@@ -4,7 +4,7 @@ A phone web app (PWA) that tracks one Clash Royale player's ranked (Path of Lege
 The owner is a Korean speaker and not a developer: reply in Korean, plain words, step by step for anything they must click.
 
 ## How it works
-- `.github/workflows/sync.yml` runs `scripts/sync.py` every 10 minutes (plus manual "Run workflow") and commits `data/battles.json` only when it changed.
+- `.github/workflows/sync.yml` runs `scripts/sync.py` and commits `data/battles.json` only when it changed. It is triggered every 10 minutes by an external cron-job.org job calling the `workflow_dispatch` API (POST /repos/dtmclashroyal-create/trophy-log/actions/workflows/sync.yml/dispatches, body {"ref":"main"}) with a fine-grained token (Actions: write, this repo only) the owner keeps at cron-job.org. GitHub's own `schedule` (every 30 min) is only a backup because it is often late. If syncs stop, the token may have expired.
 - `scripts/sync.py` (stdlib only) calls the official API **through the RoyaleAPI proxy** `https://proxy.royaleapi.dev/v1/players/...`. The key in secret `CR_API_KEY` is whitelisted for the proxy IP `45.79.218.79`; GitHub runner IPs change, so never call `api.clashroyale.com` directly. Tag comes from repo variable `CR_TAG` (default `222PVQCR8`).
 - The battle log API returns only the latest ~25–30 battles; sync merges by `id` (battleTime `YYYYMMDDTHHMMSS`), so `data/battles.json` keeps the full history.
 - GitHub Pages serves the repo root (`main`, `/`): https://dtmclashroyal-create.github.io/trophy-log/
