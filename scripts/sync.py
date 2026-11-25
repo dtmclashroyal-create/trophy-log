@@ -32,7 +32,21 @@ def battle(b):
             "start": me.get("startingTrophies"), "change": me.get("trophyChange"),
             "crowns": c, "oppCrowns": oc,
             "result": "win" if c > oc else "loss" if c < oc else "draw",
-            "deck": sorted(x["name"] for x in me.get("cards", [])), "opp": op.get("name", "")}
+            "deck": sorted(x["name"] for x in me.get("cards", [])),
+            "evo": sorted(x["name"] for x in me.get("cards", []) if x.get("evolutionLevel")),
+            "opp": op.get("name", "")}
+
+
+def card_icons(log, cards):
+    """Collect name -> {icon, evo} image URLs (Supercell CDN) from every card seen in the log."""
+    for b in log:
+        for side in (b.get("team", []) + b.get("opponent", [])):
+            for c in side.get("cards", []):
+                urls = c.get("iconUrls") or {}
+                entry = {k: v for k, v in (("icon", urls.get("medium")), ("evo", urls.get("evolutionMedium"))) if v}
+                if entry and cards.get(c["name"]) != {**cards.get(c["name"], {}), **entry}:
+                    cards[c["name"]] = {**cards.get(c["name"], {}), **entry}
+    return cards
 
 
 def profile(p):
@@ -58,10 +72,20 @@ def main():
     except FileNotFoundError:
         data = {"profile": None, "battles": []}
 
-    have = {b["id"] for b in data["battles"]}
-    new = [battle(b) for b in log if b["battleTime"][:15] not in have]
+    have = {b["id"]: b for b in data["battles"]}
+    new, backfilled = [], False
+    for raw in log:
+        b = battle(raw)
+        old = have.get(b["id"])
+        if old is None:
+            new.append(b)
+        elif "evo" not in old:  # battles saved before evolution info existed
+            old["evo"] = b["evo"]; backfilled = True
+    before = json.dumps(data.get("cards", {}), sort_keys=True)
+    data["cards"] = card_icons(log, dict(data.get("cards", {})))
     p = profile(prof)
-    changed = bool(new) or p != {k: v for k, v in (data["profile"] or {}).items() if k != "updatedAt"}
+    changed = (bool(new) or backfilled or json.dumps(data["cards"], sort_keys=True) != before
+               or p != {k: v for k, v in (data["profile"] or {}).items() if k != "updatedAt"})
     if not changed:
         print("no changes")
         return

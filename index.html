@@ -71,8 +71,9 @@ td.note{color:var(--mute);font-size:13px;overflow-wrap:anywhere}
 .dmeta{font-size:13px;color:var(--mute);white-space:nowrap}
 .bar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--loss) 70%,transparent);margin:6px 0 8px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--win)}
-.cards{display:flex;flex-wrap:wrap;gap:4px}
-.cards span{font-size:12px;background:var(--chipbg);border-radius:6px;padding:2px 6px;white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;max-width:340px}
+.cards img,.cards .noimg{width:100%;aspect-ratio:5/6;object-fit:contain;display:block}
+.cards .noimg{display:grid;place-items:center;text-align:center;font-size:11px;line-height:1.2;background:var(--chipbg);border-radius:8px;padding:4px;overflow-wrap:anywhere}
 .muted{color:var(--mute);font-size:14px;margin:0}
 @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){table{font-size:14px}th,td{padding:7px 4px}.fig1 .v.big{font-size:38px}.hide-sm{display:none}}
@@ -132,7 +133,7 @@ const sign = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + fmt(Math.abs(n));
 const DAY = 864e5;
 const MODES = {pathOfLegend:'랭크전',PvP:'트로피전',competitiveDuel:'경쟁 대결',riverRacePvP:'강 레이스',riverRaceDuel:'강 레이스 듀얼',boatBattle:'보트 전투',clanMate:'클랜 친선',friendly:'친선전',challenge:'챌린지',tournament:'토너먼트'};
 const SERIES = {ranked:'랭크 점수',ladder:'트로피'};
-let all = [], profile = null, series = null, range = 0, shown = 30;
+let all = [], profile = null, cards = {}, series = null, range = 0, shown = 30;
 
 async function load(){
   $('refresh').classList.add('spin');
@@ -141,7 +142,7 @@ async function load(){
     if(!r.ok) throw new Error(r.status);
     const d = await r.json();
     all = (d.battles || []).slice().sort((a,b)=>a.t-b.t);
-    profile = d.profile; render();
+    profile = d.profile; cards = d.cards || {}; render();
   }catch(e){
     $('sync').textContent = '기록을 불러오지 못했어요. 인터넷 연결을 확인하고 ↻를 눌러 주세요.';
   }finally{ $('refresh').classList.remove('spin') }
@@ -223,16 +224,26 @@ function renderRows(){
 function renderDecks(){
   const map=new Map();
   all.filter(b=>b.deck?.length===8).forEach(b=>{
-    const key=b.deck.join('|');const g=map.get(key)||{deck:b.deck,w:0,l:0,net:0,last:0};
+    const key=b.deck.join('|');const g=map.get(key)||{deck:b.deck,evo:[],w:0,l:0,net:0,last:0};
     if(b.result==='win')g.w++;else if(b.result==='loss')g.l++;
     if(b.type==='pathOfLegend'&&typeof b.change==='number')g.net+=b.change;
-    g.last=Math.max(g.last,b.t);map.set(key,g);
+    if(b.t>=g.last){g.last=b.t;g.evo=b.evo||[]}
+    map.set(key,g);
   });
   const list=[...map.values()].filter(g=>g.w+g.l).sort((a,b)=>(b.w+b.l)-(a.w+a.l)||b.last-a.last).slice(0,6);
   if(!list.length)return;
   $('decks').innerHTML=list.map(g=>{const n=g.w+g.l,r=Math.round(g.w/n*100);
-    return `<div class="deck"><div class="dtop"><span class="drate">${r}%</span><span class="dmeta">${g.w}승 ${g.l}패${g.net?` · 랭크 ${sign(g.net)}`:''}</span></div><div class="bar"><i style="width:${r}%"></i></div><div class="cards">${g.deck.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`}).join('');
+    // evolved cards first, like the in-game deck
+    const order=[...g.deck].sort((a,b)=>g.evo.includes(b)-g.evo.includes(a));
+    return `<div class="deck"><div class="dtop"><span class="drate">${r}%</span><span class="dmeta">${g.w}승 ${g.l}패${g.net?` · 랭크 ${sign(g.net)}`:''}</span></div><div class="bar"><i style="width:${r}%"></i></div><div class="cards">${order.map(name=>cardImg(name,g.evo.includes(name))).join('')}</div></div>`}).join('');
 }
+function cardImg(name,isEvo){
+  const c=cards[name]||{},src=(isEvo&&c.evo)||c.icon;
+  if(!src||!/^https:\/\//.test(src))return `<span class="noimg">${esc(name)}</span>`;
+  return `<img src="${esc(src)}" alt="${esc(name)}" title="${esc(name)}" loading="lazy" decoding="async">`;
+}
+// if an image can't load, show the card name instead
+$('decks').addEventListener('error',e=>{const i=e.target;if(i.tagName!=='IMG')return;const s=document.createElement('span');s.className='noimg';s.textContent=i.alt;i.replaceWith(s)},true);
 
 function renderSync(){
   if(!profile){$('who').textContent='';$('sync').textContent='';return}

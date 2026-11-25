@@ -1,5 +1,6 @@
-// 앱 화면은 캐시해서 오프라인에서도 열리고, 기록 데이터는 항상 최신을 먼저 시도해요.
-const CACHE = 'trophy-log-v1';
+// 앱 화면과 기록은 항상 최신을 먼저 받고(인터넷이 없으면 저장해 둔 것),
+// 아이콘·폰트·카드 이미지처럼 잘 안 바뀌는 것은 저장해 둔 것을 먼저 써요.
+const CACHE = 'trophy-log-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -12,21 +13,26 @@ self.addEventListener('activate', e => {
     .then(() => self.clients.claim()));
 });
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== 'GET') return;
-  if (url.origin === location.origin && url.pathname.endsWith('/data/battles.json')) {
-    // 네트워크 우선, 실패하면 마지막으로 받은 기록
-    e.respondWith(fetch(e.request).then(r => {
-      const copy = r.clone();
-      caches.open(CACHE).then(c => c.put('data/battles.json', copy));
-      return r;
-    }).catch(() => caches.match('data/battles.json')));
-    return;
-  }
-  // 그 외(화면, 아이콘, 폰트): 캐시 우선, 없으면 받아서 저장
-  e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
-    if (r.ok || r.type === 'opaque') { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+function networkFirst(req, key) {
+  return fetch(req).then(r => {
+    if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(key || req, copy)); }
     return r;
-  })));
+  }).catch(() => caches.match(key || req));
+}
+
+function cacheFirst(req) {
+  return caches.match(req).then(hit => hit || fetch(req).then(r => {
+    if (r.ok || r.type === 'opaque') { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
+    return r;
+  }));
+}
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  const same = url.origin === location.origin;
+  if (same && url.pathname.endsWith('/data/battles.json')) return e.respondWith(networkFirst(req, 'data/battles.json'));
+  if (req.mode === 'navigate' || (same && /\.(html|js|webmanifest)$/.test(url.pathname))) return e.respondWith(networkFirst(req));
+  e.respondWith(cacheFirst(req));
 });
