@@ -14,7 +14,7 @@ The owner is a Korean speaker and not a developer: reply in Korean, plain words,
 ```
 { "profile": {name, tag, trophies, bestTrophies, ranked, league, rank, lastSeason, bestSeason, wins, losses, updatedAt},
   "cards":   { "<card name>": {"icon": url, "evo": url, "hero": url} },      // Supercell CDN images from the API
-  "battles": [ {id, t(ms), type, mode, start, change, crowns, oppCrowns, result, deck[8 names, sorted], evo[names], hero[names], opp} ] }
+  "battles": [ {id, t(ms), type, mode, start, change, crowns, oppCrowns, result, deck[8 names, sorted], evo[names], hero[names], opp, oppDeck[8 names or [] for 2v2]} ] }
 ```
 - Ranked score = `start + change` for `type == "pathOfLegend"`; trophy road is `type == "PvP"`.
 - Gotcha: when the player is unranked this season, the API repeats last season's final rank in `currentPathOfLegendSeasonResult.rank`; the app shows "언랭" when it equals `lastSeason.rank`.
@@ -25,3 +25,4 @@ The owner is a Korean speaker and not a developer: reply in Korean, plain words,
 - Test the page at phone width (~390px) before pushing; check no horizontal scroll.
 - Test sync locally with `python scripts/sync.py --from DIR` (DIR has profile.json + battlelog.json) so nothing hits the network.
 - Card slots: API `evolutionLevel` 1 = evolution, 2 = hero (images `evolutionMedium` / `heroMedium`). The deck view orders evolution → hero → the rest.
+- Matchup analysis ("상대 윈컨별 승률"): only win-condition cards from `WINCONS` in index.html are compared (owner's request). Estimate = (wins + 5·p0)/(games + 5), p0 = overall win rate; rows under 5 games are faded. Add new win-condition cards to `WINCONS` (English API name, Korean label), most defining first.

@@ -36,7 +36,9 @@ def battle(b):
             # evolutionLevel 1 = evolution slot, 2 = hero slot
             "evo": sorted(x["name"] for x in me.get("cards", []) if x.get("evolutionLevel") == 1),
             "hero": sorted(x["name"] for x in me.get("cards", []) if (x.get("evolutionLevel") or 0) >= 2),
-            "opp": op.get("name", "")}
+            "opp": op.get("name", ""),
+            # opponent's 8 cards (1v1 only; 2v2 has two opponents)
+            "oppDeck": sorted(x["name"] for x in op.get("cards", [])) if len(b.get("opponent", [])) == 1 else []}
 
 
 def card_icons(log, cards):
@@ -81,8 +83,10 @@ def main():
         old = have.get(b["id"])
         if old is None:
             new.append(b)
-        elif "hero" not in old:  # battles saved before hero info existed
-            old["evo"], old["hero"] = b["evo"], b["hero"]; backfilled = True
+        elif "hero" not in old or "oppDeck" not in old:  # battles saved before these fields existed
+            for k in ("evo", "hero", "oppDeck"):
+                old[k] = b[k]
+            backfilled = True
     before = json.dumps(data.get("cards", {}), sort_keys=True)
     data["cards"] = card_icons(log, dict(data.get("cards", {})))
     p = profile(prof)
