@@ -172,7 +172,12 @@ function renderFigs(pts){
   const f = (k,v,cls='')=>`<div class="fig1"><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`;
   const c = n=>n>0?'up':n<0?'dn':'';
   let html = f('현재 '+SERIES[series],fmt(cur),'big')+f('기록 중 최고',fmt(peak))+f('오늘',sign(dToday),c(dToday))+f('7일',sign(d7),c(d7));
-  if(series==='ranked'&&profile?.rank) html += f('순위',fmt(profile.rank)+'위');
+  // The API repeats last season's final rank in the current season when the player is unranked.
+  if(series==='ranked'){
+    const last=profile?.lastSeason?.rank, now=profile?.rank;
+    if(now&&now!==last) html += f('순위',fmt(now)+'위');
+    else html += f('순위','언랭') + (last?f('지난 시즌',fmt(last)+'위'):'');
+  }
   $('figs').innerHTML = html;
 }
 
