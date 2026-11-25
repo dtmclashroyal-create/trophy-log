@@ -224,21 +224,22 @@ function renderRows(){
 function renderDecks(){
   const map=new Map();
   all.filter(b=>b.deck?.length===8).forEach(b=>{
-    const key=b.deck.join('|');const g=map.get(key)||{deck:b.deck,evo:[],w:0,l:0,net:0,last:0};
+    const key=b.deck.join('|');const g=map.get(key)||{deck:b.deck,evo:[],hero:[],w:0,l:0,net:0,last:0};
     if(b.result==='win')g.w++;else if(b.result==='loss')g.l++;
     if(b.type==='pathOfLegend'&&typeof b.change==='number')g.net+=b.change;
-    if(b.t>=g.last){g.last=b.t;g.evo=b.evo||[]}
+    if(b.t>=g.last){g.last=b.t;g.evo=b.evo||[];g.hero=b.hero||[]}
     map.set(key,g);
   });
   const list=[...map.values()].filter(g=>g.w+g.l).sort((a,b)=>(b.w+b.l)-(a.w+a.l)||b.last-a.last).slice(0,6);
   if(!list.length)return;
   $('decks').innerHTML=list.map(g=>{const n=g.w+g.l,r=Math.round(g.w/n*100);
-    // evolved cards first, like the in-game deck
-    const order=[...g.deck].sort((a,b)=>g.evo.includes(b)-g.evo.includes(a));
-    return `<div class="deck"><div class="dtop"><span class="drate">${r}%</span><span class="dmeta">${g.w}승 ${g.l}패${g.net?` · 랭크 ${sign(g.net)}`:''}</span></div><div class="bar"><i style="width:${r}%"></i></div><div class="cards">${order.map(name=>cardImg(name,g.evo.includes(name))).join('')}</div></div>`}).join('');
+    // evolution cards first, then heroes, like the in-game deck
+    const slot=n=>g.evo.includes(n)?0:g.hero.includes(n)?1:2;
+    const order=[...g.deck].sort((a,b)=>slot(a)-slot(b));
+    return `<div class="deck"><div class="dtop"><span class="drate">${r}%</span><span class="dmeta">${g.w}승 ${g.l}패${g.net?` · 랭크 ${sign(g.net)}`:''}</span></div><div class="bar"><i style="width:${r}%"></i></div><div class="cards">${order.map(name=>cardImg(name,['evo','hero','icon'][slot(name)])).join('')}</div></div>`}).join('');
 }
-function cardImg(name,isEvo){
-  const c=cards[name]||{},src=(isEvo&&c.evo)||c.icon;
+function cardImg(name,kind){
+  const c=cards[name]||{},src=c[kind]||c.icon;
   if(!src||!/^https:\/\//.test(src))return `<span class="noimg">${esc(name)}</span>`;
   return `<img src="${esc(src)}" alt="${esc(name)}" title="${esc(name)}" loading="lazy" decoding="async">`;
 }

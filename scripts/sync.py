@@ -33,7 +33,9 @@ def battle(b):
             "crowns": c, "oppCrowns": oc,
             "result": "win" if c > oc else "loss" if c < oc else "draw",
             "deck": sorted(x["name"] for x in me.get("cards", [])),
-            "evo": sorted(x["name"] for x in me.get("cards", []) if x.get("evolutionLevel")),
+            # evolutionLevel 1 = evolution slot, 2 = hero slot
+            "evo": sorted(x["name"] for x in me.get("cards", []) if x.get("evolutionLevel") == 1),
+            "hero": sorted(x["name"] for x in me.get("cards", []) if (x.get("evolutionLevel") or 0) >= 2),
             "opp": op.get("name", "")}
 
 
@@ -43,7 +45,7 @@ def card_icons(log, cards):
         for side in (b.get("team", []) + b.get("opponent", [])):
             for c in side.get("cards", []):
                 urls = c.get("iconUrls") or {}
-                entry = {k: v for k, v in (("icon", urls.get("medium")), ("evo", urls.get("evolutionMedium"))) if v}
+                entry = {k: v for k, v in (("icon", urls.get("medium")), ("evo", urls.get("evolutionMedium")), ("hero", urls.get("heroMedium"))) if v}
                 if entry and cards.get(c["name"]) != {**cards.get(c["name"], {}), **entry}:
                     cards[c["name"]] = {**cards.get(c["name"], {}), **entry}
     return cards
@@ -79,8 +81,8 @@ def main():
         old = have.get(b["id"])
         if old is None:
             new.append(b)
-        elif "evo" not in old:  # battles saved before evolution info existed
-            old["evo"] = b["evo"]; backfilled = True
+        elif "hero" not in old:  # battles saved before hero info existed
+            old["evo"], old["hero"] = b["evo"], b["hero"]; backfilled = True
     before = json.dumps(data.get("cards", {}), sort_keys=True)
     data["cards"] = card_icons(log, dict(data.get("cards", {})))
     p = profile(prof)

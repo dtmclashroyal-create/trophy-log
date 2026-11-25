@@ -13,8 +13,8 @@ The owner is a Korean speaker and not a developer: reply in Korean, plain words,
 ## data/battles.json
 ```
 { "profile": {name, tag, trophies, bestTrophies, ranked, league, rank, lastSeason, bestSeason, wins, losses, updatedAt},
-  "cards":   { "<card name>": {"icon": url, "evo": url} },      // Supercell CDN images from the API
-  "battles": [ {id, t(ms), type, mode, start, change, crowns, oppCrowns, result, deck[8 names, sorted], evo[names], opp} ] }
+  "cards":   { "<card name>": {"icon": url, "evo": url, "hero": url} },      // Supercell CDN images from the API
+  "battles": [ {id, t(ms), type, mode, start, change, crowns, oppCrowns, result, deck[8 names, sorted], evo[names], hero[names], opp} ] }
 ```
 - Ranked score = `start + change` for `type == "pathOfLegend"`; trophy road is `type == "PvP"`.
 - Gotcha: when the player is unranked this season, the API repeats last season's final rank in `currentPathOfLegendSeasonResult.rank`; the app shows "언랭" when it equals `lastSeason.rank`.
@@ -24,3 +24,4 @@ The owner is a Korean speaker and not a developer: reply in Korean, plain words,
 - Values from the API are text: escape before putting them in HTML (`esc()` in index.html).
 - Test the page at phone width (~390px) before pushing; check no horizontal scroll.
 - Test sync locally with `python scripts/sync.py --from DIR` (DIR has profile.json + battlelog.json) so nothing hits the network.
+- Card slots: API `evolutionLevel` 1 = evolution, 2 = hero (images `evolutionMedium` / `heroMedium`). The deck view orders evolution → hero → the rest.

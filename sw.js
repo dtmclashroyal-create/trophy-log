@@ -1,6 +1,6 @@
 // 앱 화면과 기록은 항상 최신을 먼저 받고(인터넷이 없으면 저장해 둔 것),
 // 아이콘·폰트·카드 이미지처럼 잘 안 바뀌는 것은 저장해 둔 것을 먼저 써요.
-const CACHE = 'trophy-log-v2';
+const CACHE = 'trophy-log-v3';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
