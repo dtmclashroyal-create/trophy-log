@@ -1,7 +1,7 @@
 name: 배틀 기록 동기화
 
 on:
-  # 10분마다 cron-job.org가 workflow_dispatch로 실행해요 (GitHub 자체 예약은 자주 늦어서).
+  # 5분마다 cron-job.org가 workflow_dispatch로 실행해요 (GitHub 자체 예약은 자주 늦어서).
   # 아래 schedule은 cron-job.org가 멈췄을 때를 위한 예비용이에요.
   schedule:
     - cron: "*/30 * * * *"

@@ -321,7 +321,7 @@ function renderSync(){
   const mins=Math.round((Date.now()-profile.updatedAt)/6e4);
   const ago=mins<1?'방금':mins<60?mins+'분 전':mins<1440?Math.round(mins/60)+'시간 전':Math.round(mins/1440)+'일 전';
   const bs=profile.bestSeason;
-  $('sync').textContent=`약 10분마다 자동 기록 · 마지막 변화 ${ago}`+(bs?.trophies?` · 역대 시즌 최고 ${fmt(bs.trophies)}점`+(bs.rank?` (${fmt(bs.rank)}위)`:''):'');
+  $('sync').textContent=`약 5분마다 자동 기록 · 마지막 변화 ${ago}`+(bs?.trophies?` · 역대 시즌 최고 ${fmt(bs.trophies)}점`+(bs.rank?` (${fmt(bs.rank)}위)`:''):'');
 }
 
 function render(){
