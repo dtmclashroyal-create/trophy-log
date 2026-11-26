@@ -177,7 +177,7 @@ const fmt = n => Number(n).toLocaleString('ko-KR');
 const sign = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + fmt(Math.abs(n));
 const DAY = 864e5;
 // Win conditions, most defining first (used to name an opponent deck's main threat).
-const WINCONS = [['Golem','골렘'],['Lava Hound','라바 하운드'],['Electro Giant','일렉트로 자이언트'],['Elixir Golem','엘릭서 골렘'],['Giant','자이언트'],['Royal Giant','로얄 자이언트'],['Goblin Giant','자이언트 고블린'],['Minion Giant','미니언 자이언트'],['Rune Giant','룬 자이언트'],['Goblinstein','고블린슈타인'],['Hog Rider','호그 라이더'],['Royal Hogs','로얄 호그'],['Ram Rider','램 라이더'],['Battle Ram','배틀 램'],['X-Bow','대형 석궁'],['Mortar','박격포'],['Balloon','해골 비행선'],['Graveyard','무덤'],['Three Musketeers','삼총사'],['Goblin Drill','고블린 드릴'],['Mega Knight','메가 나이트'],['P.E.K.K.A','P.E.K.K.A'],['Sparky','스파키'],['Giant Skeleton','자이언트 해골'],['Miner','광부'],['Goblin Barrel','고블린 통'],['Skeleton Barrel','해골 통'],['Wall Breakers','해골 돌격병'],['Suspicious Bush','수상한 덤불']];
+const WINCONS = [['Golem','골렘'],['Lava Hound','라바 하운드'],['Electro Giant','일렉트로 자이언트'],['Elixir Golem','엘릭서 골렘'],['Giant','자이언트'],['Royal Giant','로얄 자이언트'],['Goblin Giant','자이언트 고블린'],['Minion Giant','미니언 자이언트'],['Rune Giant','룬 자이언트'],['Goblinstein','고블린슈타인'],['Hog Rider','호그 라이더'],['Royal Hogs','로얄 호그'],['Ram Rider','램 라이더'],['Battle Ram','배틀 램'],['X-Bow','대형 석궁'],['Mortar','박격포'],['Balloon','해골 비행선'],['Graveyard','무덤'],['Three Musketeers','삼총사'],['Goblin Drill','고블린 드릴'],['Mega Knight','메가 나이트'],['P.E.K.K.A','P.E.K.K.A'],['Sparky','스파키'],['Giant Skeleton','자이언트 해골'],['Miner','광부'],['Goblin Barrel','고블린 통'],['Skeleton Barrel','해골 통'],['Wall Breakers','해골 돌격병'],['Suspicious Bush','수상한 수풀']];
 const WC_FALLBACK = Object.fromEntries(WINCONS);
 let KO = {};
 const ko = n => KO[n] || WC_FALLBACK[n] || n;
