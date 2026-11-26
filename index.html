@@ -95,6 +95,18 @@ td.note{color:var(--mute);font-size:13px;overflow-wrap:anywhere}
 .mini img,.mini .noimg{width:100%;aspect-ratio:5/6;object-fit:contain;display:block}
 .mini .noimg{display:grid;place-items:center;font-size:8px;background:var(--chipbg);border-radius:4px;overflow-wrap:anywhere;text-align:center}
 .deck[data-key]{cursor:pointer}
+.pickgrp{display:inline-flex;align-items:stretch}
+.pickgrp .pick{border-radius:99px 0 0 99px;border-right:0}
+.unpin{border:1px solid var(--line);background:var(--bg);color:var(--mute);border-radius:0 99px 99px 0;min-width:34px;min-height:36px;font-size:16px;cursor:pointer}
+.pickgrp .pick[aria-pressed=true]+.unpin{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.pick.add{border-style:dashed;color:var(--mute)}
+.picker{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 12px;display:grid;gap:12px;background:var(--bg)}
+.prow{display:grid;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.prow:last-child{border-bottom:0;padding-bottom:0}
+.prow .mini{margin:0}
+.pmeta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.pin{font:500 13px "Noto Sans KR",sans-serif;border:1px solid var(--gold);background:var(--gold);color:#1a1300;border-radius:99px;padding:6px 14px;min-height:36px;cursor:pointer;white-space:nowrap}
+.pin.on{background:transparent;color:var(--mute);border-color:var(--line)}
 .deck .use{font-size:12px;color:var(--mute);margin-top:6px}
 .foot{font-size:12px;color:var(--mute);margin:12px 0 0;line-height:1.5}
 @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}.side{order:-1}}
@@ -143,10 +155,11 @@ td.note{color:var(--mute);font-size:13px;overflow-wrap:anywhere}
       <section class="card">
         <h2>상대 윈컨별 승률</h2>
         <div class="picks" id="picks"></div>
+        <div class="picker" id="picker" hidden></div>
         <div class="mini" id="mini" hidden></div>
         <p class="musum" id="musum"></p>
         <div id="mu"><p class="muted">상대 덱이 담긴 경기가 쌓이면 어떤 윈컨에 약한지 보여 줘요.</p></div>
-        <p class="foot">덱을 고르면 그 덱으로 한 경기만 따져요. 추정 승률은 판 수가 적을수록 평균 승률(덱을 고르면 그 덱의 평균) 쪽으로 당겨서 계산해요. 경기가 쌓일수록 실제 승률에 가까워지고, 흐리게 보이는 줄은 아직 5판이 안 된 상대예요. 한 덱에 윈컨이 둘이면 둘 다에 반영돼요.</p>
+        <p class="foot">덱을 추가해서 고르면 그 덱으로 한 경기만 따져요. 추정 승률은 판 수가 적을수록 평균 승률(덱을 고르면 그 덱의 평균) 쪽으로 당겨서 계산해요. 경기가 쌓일수록 실제 승률에 가까워지고, 흐리게 보이는 줄은 아직 5판이 안 된 상대예요. 한 덱에 윈컨이 둘이면 둘 다에 반영돼요.</p>
       </section>
       <section class="card">
         <h2>덱별 성적</h2>
@@ -164,8 +177,10 @@ const fmt = n => Number(n).toLocaleString('ko-KR');
 const sign = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + fmt(Math.abs(n));
 const DAY = 864e5;
 // Win conditions, most defining first (used to name an opponent deck's main threat).
-const WINCONS = [['Golem','골렘'],['Lava Hound','라바 하운드'],['Electro Giant','일렉트로 자이언트'],['Elixir Golem','엘릭서 골렘'],['Giant','자이언트'],['Royal Giant','로열 자이언트'],['Goblin Giant','고블린 자이언트'],['Minion Giant','미니언 자이언트'],['Rune Giant','룬 자이언트'],['Goblinstein','고블린슈타인'],['Hog Rider','호그 라이더'],['Royal Hogs','로열 호그'],['Ram Rider','램 라이더'],['Battle Ram','배틀 램'],['X-Bow','엑스보우'],['Mortar','박격포'],['Balloon','벌룬'],['Graveyard','묘지'],['Three Musketeers','삼총사'],['Goblin Drill','고블린 드릴'],['Mega Knight','메가 나이트'],['P.E.K.K.A','페카'],['Sparky','스파키'],['Giant Skeleton','자이언트 해골'],['Miner','광부'],['Goblin Barrel','고블린 통'],['Skeleton Barrel','해골 비행선'],['Wall Breakers','월 브레이커'],['Suspicious Bush','수상한 덤불']];
-const WC_KO = Object.fromEntries(WINCONS);
+const WINCONS = [['Golem','골렘'],['Lava Hound','라바 하운드'],['Electro Giant','일렉트로 자이언트'],['Elixir Golem','엘릭서 골렘'],['Giant','자이언트'],['Royal Giant','로얄 자이언트'],['Goblin Giant','자이언트 고블린'],['Minion Giant','미니언 자이언트'],['Rune Giant','룬 자이언트'],['Goblinstein','고블린슈타인'],['Hog Rider','호그 라이더'],['Royal Hogs','로얄 호그'],['Ram Rider','램 라이더'],['Battle Ram','배틀 램'],['X-Bow','대형 석궁'],['Mortar','박격포'],['Balloon','해골 비행선'],['Graveyard','무덤'],['Three Musketeers','삼총사'],['Goblin Drill','고블린 드릴'],['Mega Knight','메가 나이트'],['P.E.K.K.A','P.E.K.K.A'],['Sparky','스파키'],['Giant Skeleton','자이언트 해골'],['Miner','광부'],['Goblin Barrel','고블린 통'],['Skeleton Barrel','해골 통'],['Wall Breakers','해골 돌격병'],['Suspicious Bush','수상한 덤불']];
+const WC_FALLBACK = Object.fromEntries(WINCONS);
+let KO = {};
+const ko = n => KO[n] || WC_FALLBACK[n] || n;
 const mainWincon = deck => (WINCONS.find(([n])=>deck?.includes(n))||[])[0];
 const MODES = {pathOfLegend:'랭크전',PvP:'트로피전',competitiveDuel:'경쟁 대결',riverRacePvP:'강 레이스',riverRaceDuel:'강 레이스 듀얼',boatBattle:'보트 전투',clanMate:'클랜 친선',friendly:'친선전',challenge:'챌린지',tournament:'토너먼트'};
 const SERIES = {ranked:'랭크 점수',ladder:'트로피'};
@@ -178,6 +193,7 @@ async function load(){
     const r = await fetch('data/battles.json?ts=' + Date.now(), {cache:'no-store'});
     if(!r.ok) throw new Error(r.status);
     const d = await r.json();
+    if(!Object.keys(KO).length) try{ KO = await (await fetch('data/cards_ko.json')).json() }catch{}
     all = (d.battles || []).slice().sort((a,b)=>a.t-b.t);
     profile = d.profile; cards = d.cards || {}; render();
   }catch(e){
@@ -253,7 +269,7 @@ function renderRows(){
   const dc=d=>d>0?'style="color:var(--win)"':d<0?'style="color:var(--loss)"':'';
   $('rows').innerHTML=rows.slice(0,shown).map(b=>{
     const ok=typeof b.start==='number'&&typeof b.change==='number'&&b.start>20;
-    return `<tr><td class="when">${esc(tf.format(b.t))}</td><td class="mode">${esc(MODES[b.type]||b.type||'기타')}${mainWincon(b.oppDeck)?`<span class="vs">vs ${esc(WC_KO[mainWincon(b.oppDeck)])}</span>`:''}</td><td class="n"><b>${ok?fmt(b.start+b.change):''}</b></td><td class="n" ${ok?dc(b.change):''}>${ok?sign(b.change):''}</td><td>${tag(b.result)}<span class="cr">${esc(b.crowns)}–${esc(b.oppCrowns)}</span></td><td class="note hide-sm">${esc((b.deck||[]).join(', '))}</td></tr>`;
+    return `<tr><td class="when">${esc(tf.format(b.t))}</td><td class="mode">${esc(MODES[b.type]||b.type||'기타')}${mainWincon(b.oppDeck)?`<span class="vs">vs ${esc(ko(mainWincon(b.oppDeck)))}</span>`:''}</td><td class="n"><b>${ok?fmt(b.start+b.change):''}</b></td><td class="n" ${ok?dc(b.change):''}>${ok?sign(b.change):''}</td><td>${tag(b.result)}<span class="cr">${esc(b.crowns)}–${esc(b.oppCrowns)}</span></td><td class="note hide-sm">${esc((b.deck||[]).map(ko).join(', '))}</td></tr>`;
   }).join('');
   $('more').hidden=rows.length<=shown;
 }
@@ -273,25 +289,36 @@ function renderDecks(){
     // evolution cards first, then heroes, like the in-game deck
     const slot=n=>g.evo.includes(n)?0:g.hero.includes(n)?1:2;
     const order=[...g.deck].sort((a,b)=>slot(a)-slot(b));
-    return `<div class="deck" data-key="${esc(g.deck.join('|'))}"><div class="dtop"><span class="drate">${r}%</span><span class="dmeta">${g.w}승 ${g.l}패${g.net?` · 랭크 ${sign(g.net)}`:''}</span></div><div class="bar"><i style="width:${r}%"></i></div><div class="cards">${order.map(name=>cardImg(name,['evo','hero','icon'][slot(name)])).join('')}</div><div class="use">눌러서 이 덱의 상대 윈컨별 승률 보기</div></div>`}).join('');
+    return `<div class="deck" data-key="${esc(g.deck.join('|'))}"><div class="dtop"><span class="drate">${r}%</span><span class="dmeta">${g.w}승 ${g.l}패${g.net?` · 랭크 ${sign(g.net)}`:''}</span></div><div class="bar"><i style="width:${r}%"></i></div><div class="cards">${order.map(name=>cardImg(name,['evo','hero','icon'][slot(name)])).join('')}</div><div class="use">눌러서 이 덱을 윈컨별 승률에 추가하고 보기</div></div>`}).join('');
 }
+const PIN_KEY='trophy-log-pinned';
+let pinned=(()=>{try{return JSON.parse(localStorage.getItem(PIN_KEY)||'[]')}catch{return []}})();
+let pickerOpen=false;
+function savePins(){try{localStorage.setItem(PIN_KEY,JSON.stringify(pinned))}catch{}}
 function myDecks(bs){
   const m=new Map();
-  bs.forEach(b=>{const k=b.deck.join('|');const g=m.get(k)||{key:k,deck:b.deck,evo:[],hero:[],games:0,last:0};g.games++;if(b.t>=g.last){g.last=b.t;g.evo=b.evo||[];g.hero=b.hero||[]}m.set(k,g)});
-  const list=[...m.values()].sort((a,b)=>b.games-a.games||b.last-a.last).slice(0,6);
-  // name each deck after its own win condition; number duplicates
-  const seen={};list.forEach(d=>{const base=(WC_KO[mainWincon(d.deck)]||'기타')+' 덱';seen[base]=(seen[base]||0)+1;d.label=base+(seen[base]>1?' '+seen[base]:'')});
-  return list;
+  bs.forEach(b=>{const k=b.deck.join('|');const g=m.get(k)||{key:k,deck:b.deck,evo:[],hero:[],games:0,first:b.t,last:0};g.games++;g.first=Math.min(g.first,b.t);if(b.t>=g.last){g.last=b.t;g.evo=b.evo||[];g.hero=b.hero||[]}m.set(k,g)});
+  // name each deck after its win condition; number duplicates in the order first played so names stay put
+  const seen={};[...m.values()].sort((a,b)=>a.first-b.first).forEach(d=>{const base=(mainWincon(d.deck)?ko(mainWincon(d.deck)):'기타')+' 덱';seen[base]=(seen[base]||0)+1;d.label=base+(seen[base]>1?' '+seen[base]:'')});
+  return [...m.values()].sort((a,b)=>b.games-a.games||b.last-a.last);
 }
+const deckSlot=d=>n=>d.evo.includes(n)?0:d.hero.includes(n)?1:2;
+const deckCards=d=>{const slot=deckSlot(d);return [...d.deck].sort((a,b)=>slot(a)-slot(b)).map(n=>cardImg(n,['evo','hero','icon'][slot(n)])).join('')};
 function renderMatchups(){
   const allBs=all.filter(b=>b.oppDeck?.length===8&&b.deck?.length===8&&(b.result==='win'||b.result==='loss'));
   if(!allBs.length)return;
-  const decks=myDecks(allBs);
-  if(muDeck&&!decks.some(d=>d.key===muDeck))muDeck='';
-  $('picks').innerHTML=`<button class="pick" data-k="" aria-pressed="${!muDeck}">내 덱 전체 · ${allBs.length}판</button>`+decks.map(d=>`<button class="pick" data-k="${esc(d.key)}" aria-pressed="${d.key===muDeck}">${esc(d.label)} · ${d.games}판</button>`).join('');
-  const sel=decks.find(d=>d.key===muDeck);
+  const decks=myDecks(allBs), byKey=new Map(decks.map(d=>[d.key,d]));
+  const mine=pinned.map(k=>byKey.get(k)).filter(Boolean);
+  if(muDeck&&!mine.some(d=>d.key===muDeck))muDeck='';
+  $('picks').innerHTML=`<button class="pick" data-k="" aria-pressed="${!muDeck}">내 덱 전체 · ${allBs.length}판</button>`
+    +mine.map(d=>`<span class="pickgrp"><button class="pick" data-k="${esc(d.key)}" aria-pressed="${d.key===muDeck}">${esc(d.label)} · ${d.games}판</button><button class="unpin" data-k="${esc(d.key)}" aria-label="${esc(d.label)} 빼기">×</button></span>`).join('')
+    +`<button class="pick add" id="addDeck" aria-expanded="${pickerOpen}">${pickerOpen?'닫기':'+ 덱 추가'}</button>`;
+  $('picker').hidden=!pickerOpen;
+  if(pickerOpen)$('picker').innerHTML=`<p class="muted">보고 싶은 덱만 추가하세요. 이 핸드폰에 저장돼요.</p>`+decks.map(d=>{const on=pinned.includes(d.key);
+    return `<div class="prow"><div class="mini">${deckCards(d)}</div><div class="pmeta"><span><b>${esc(d.label)}</b> · ${d.games}판</span><button class="pin${on?' on':''}" data-k="${esc(d.key)}">${on?'추가됨':'추가'}</button></div></div>`}).join('');
+  const sel=byKey.get(muDeck);
   $('mini').hidden=!sel;
-  if(sel){const slot=n=>sel.evo.includes(n)?0:sel.hero.includes(n)?1:2;$('mini').innerHTML=[...sel.deck].sort((a,b)=>slot(a)-slot(b)).map(n=>cardImg(n,['evo','hero','icon'][slot(n)])).join('')}
+  if(sel)$('mini').innerHTML=deckCards(sel);
   const bs=sel?allBs.filter(b=>b.deck.join('|')===muDeck):allBs;
   const W=bs.filter(b=>b.result==='win').length, p0=W/bs.length, K=5;
   const tally=new Map();
@@ -299,18 +326,24 @@ function renderMatchups(){
   // Bayesian (beta-prior) estimate: small samples are pulled toward the overall win rate
   const rows=[...tally.values()].map(g=>({...g,games:g.w+g.l,est:(g.w+K*p0)/(g.w+g.l+K)})).sort((a,b)=>a.est-b.est||b.games-a.games);
   const weak=rows.find(r=>r.games>=5&&r.est<p0-0.03);
-  $('musum').innerHTML=weak?`가장 약한 상대는 <b>${esc(WC_KO[weak.n])}</b>예요. 추정 승률 ${Math.round(weak.est*100)}% (${weak.games}판, ${sel?'이 덱':'내'} 평균 ${Math.round(p0*100)}%)`:`아직 확실히 약하다고 할 만한 상대는 없어요. ${sel?'이 덱 승률':'내 평균 승률'} ${Math.round(p0*100)}% · ${bs.length}판`;
+  $('musum').innerHTML=weak?`가장 약한 상대는 <b>${esc(ko(weak.n))}</b>예요. 추정 승률 ${Math.round(weak.est*100)}% (${weak.games}판, ${sel?'이 덱':'내'} 평균 ${Math.round(p0*100)}%)`:`아직 확실히 약하다고 할 만한 상대는 없어요. ${sel?'이 덱 승률':'내 평균 승률'} ${Math.round(p0*100)}% · ${bs.length}판`;
   $('mu').innerHTML=rows.slice(0,12).map(r=>{const e=Math.round(r.est*100),raw=Math.round(r.w/r.games*100);
-    return `<div class="mu${r.games<5?' few':''}">${cardImg(r.n,'icon')}<div><div class="nm">${esc(WC_KO[r.n])}</div><div class="ct">${r.w}승 ${r.l}패 · 실제 ${raw}%</div></div><div class="pct" style="color:${r.est<p0-0.03?'var(--loss)':r.est>p0+0.03?'var(--win)':'inherit'}">${e}%</div><div class="bar" style="grid-column:2"><i style="width:${e}%"></i></div></div>`}).join('');
+    return `<div class="mu${r.games<5?' few':''}">${cardImg(r.n,'icon')}<div><div class="nm">${esc(ko(r.n))}</div><div class="ct">${r.w}승 ${r.l}패 · 실제 ${raw}%</div></div><div class="pct" style="color:${r.est<p0-0.03?'var(--loss)':r.est>p0+0.03?'var(--win)':'inherit'}">${e}%</div><div class="bar" style="grid-column:2"><i style="width:${e}%"></i></div></div>`}).join('');
 }
-$('picks').addEventListener('click',e=>{const b=e.target.closest('.pick');if(!b)return;muDeck=b.dataset.k;renderMatchups()});
-$('decks').addEventListener('click',e=>{const d=e.target.closest('.deck[data-key]');if(!d)return;muDeck=d.dataset.key;renderMatchups();$('picks').closest('section').scrollIntoView({behavior:'smooth',block:'start'})});
-$('mini').addEventListener('error',e=>{const i=e.target;if(i.tagName!=='IMG')return;const s=document.createElement('span');s.className='noimg';s.textContent=i.alt;i.replaceWith(s)},true);
-$('mu').addEventListener('error',e=>{const i=e.target;if(i.tagName!=='IMG')return;const s=document.createElement('span');s.className='noimg';s.textContent=i.alt;i.replaceWith(s)},true);
+function pin(k){if(!pinned.includes(k)){pinned.push(k);savePins()}}
+function unpin(k){pinned=pinned.filter(x=>x!==k);savePins();if(muDeck===k)muDeck=''}
+$('picks').addEventListener('click',e=>{
+  const x=e.target.closest('.unpin');if(x){unpin(x.dataset.k);renderMatchups();return}
+  if(e.target.closest('#addDeck')){pickerOpen=!pickerOpen;renderMatchups();return}
+  const b=e.target.closest('.pick');if(!b)return;muDeck=b.dataset.k;renderMatchups();
+});
+$('picker').addEventListener('click',e=>{const b=e.target.closest('.pin');if(!b)return;const k=b.dataset.k;pinned.includes(k)?unpin(k):pin(k);renderMatchups()});
+$('decks').addEventListener('click',e=>{const d=e.target.closest('.deck[data-key]');if(!d)return;pin(d.dataset.key);muDeck=d.dataset.key;pickerOpen=false;renderMatchups();$('picks').closest('section').scrollIntoView({behavior:'smooth',block:'start'})});
+['mini','mu','picker'].forEach(id=>$(id).addEventListener('error',e=>{const i=e.target;if(i.tagName!=='IMG')return;const s=document.createElement('span');s.className='noimg';s.textContent=i.alt;i.replaceWith(s)},true));
 function cardImg(name,kind){
   const c=cards[name]||{},src=c[kind]||c.icon;
-  if(!src||!/^https:\/\//.test(src))return `<span class="noimg">${esc(name)}</span>`;
-  return `<img src="${esc(src)}" alt="${esc(name)}" title="${esc(name)}" loading="lazy" decoding="async">`;
+  if(!src||!/^https:\/\//.test(src))return `<span class="noimg">${esc(ko(name))}</span>`;
+  return `<img src="${esc(src)}" alt="${esc(ko(name))}" title="${esc(ko(name))}" loading="lazy" decoding="async">`;
 }
 // if an image can't load, show the card name instead
 $('decks').addEventListener('error',e=>{const i=e.target;if(i.tagName!=='IMG')return;const s=document.createElement('span');s.className='noimg';s.textContent=i.alt;i.replaceWith(s)},true);
