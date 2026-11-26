@@ -8,7 +8,7 @@ The owner is a Korean speaker and not a developer: reply in Korean, plain words,
 - `scripts/sync.py` (stdlib only) calls the official API **through the RoyaleAPI proxy** `https://proxy.royaleapi.dev/v1/players/...`. The key in secret `CR_API_KEY` is whitelisted for the proxy IP `45.79.218.79`; GitHub runner IPs change, so never call `api.clashroyale.com` directly. Tag comes from repo variable `CR_TAG` (default `222PVQCR8`).
 - The battle log API returns only the latest ~25–30 battles; sync merges by `id` (battleTime `YYYYMMDDTHHMMSS`), so `data/battles.json` keeps the full history.
 - GitHub Pages serves the repo root (`main`, `/`): https://dtmclashroyal-create.github.io/trophy-log/
-- `index.html` is the whole app (vanilla JS, no build step). `sw.js` caches it for offline: HTML/JS/data are network-first, images/fonts cache-first. Bump `CACHE` in `sw.js` when changing cached assets.
+- `index.html` is the whole app (vanilla JS, no build step). `sw.js` caches it for offline: HTML/JS/all same-origin JSON are network-first, images/fonts cache-first. Bump `CACHE` in `sw.js` when changing cached assets.
 
 ## data/battles.json
 ```

@@ -1,6 +1,6 @@
 // 앱 화면과 기록은 항상 최신을 먼저 받고(인터넷이 없으면 저장해 둔 것),
 // 아이콘·폰트·카드 이미지처럼 잘 안 바뀌는 것은 저장해 둔 것을 먼저 써요.
-const CACHE = 'trophy-log-v6';
+const CACHE = 'trophy-log-v7';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -33,6 +33,6 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   const same = url.origin === location.origin;
   if (same && url.pathname.endsWith('/data/battles.json')) return e.respondWith(networkFirst(req, 'data/battles.json'));
-  if (req.mode === 'navigate' || (same && /\.(html|js|webmanifest)$/.test(url.pathname))) return e.respondWith(networkFirst(req));
+  if (req.mode === 'navigate' || (same && /\.(html|js|json|webmanifest)$/.test(url.pathname))) return e.respondWith(networkFirst(req));
   e.respondWith(cacheFirst(req));
 });
